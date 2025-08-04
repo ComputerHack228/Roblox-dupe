@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Camera Capture and Webhook Send</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    video {
+      width: 100%;
+      max-width: 500px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    #statusText {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Camera Capture & Send</h2>
+  <video id="videoElement" autoplay playsinline></video>
+  <canvas id="canvasElement" style="display:none;"></canvas>
+  <br>
+  <button id="captureBtn">Capture & Send</button>
+  <p id="statusText"></p>
+
+  <script>
+    const video = document.getElementById('videoElement');
+    const canvas = document.getElementById('canvasElement');
+    const captureBtn = document.getElementById('captureBtn');
+    const statusText = document.getElementById('statusText');
+
+    const WEBHOOK_URL = "https://discord.com/api/webhooks/1401269859937030154/YFzMJC6KYO9AnDhRdeSJMlvH7m4OOGeq37QclXpXNtoRXyxU4o2AodHCaHHnSKnlSsj9";
+
+    let cameraStream = null;
+
+    async function initCamera(mode = 'user') {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: mode,
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        });
+        video.srcObject = cameraStream;
+      } catch (err) {
+        statusText.textContent = "Camera access denied.";
+        console.error(err);
+      }
+    }
+
+    async function captureAndSend() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob(async (blob) => {
+        const formData = new FormData();
+        formData.append('file', blob, 'capture.jpg');
+
+        statusText.textContent = "Sending...";
+
+        try {
+          await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            body: formData
+          });
+          statusText.textContent = "Image sent successfully!";
+        } catch (err) {
+          statusText.textContent = "Failed to send image.";
+          console.error(err);
+        }
+      }, 'image/jpeg', 0.9);
+    }
+
+    captureBtn.addEventListener('click', captureAndSend);
+
+    // Start camera on load
+    window.addEventListener('DOMContentLoaded', () => {
+      initCamera('user');
+    });
+  </script>
+
+</body>
+</html>
